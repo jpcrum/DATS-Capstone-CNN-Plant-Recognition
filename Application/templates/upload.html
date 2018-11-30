@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+
+  <style media="screen">
+  .loader {
+    /* border: 16px solid #f3f3f3;
+    border-top: 16px solid #3498db;  */
+    border-radius: 50%;
+    width: 100%;
+    height: auto;
+    animation: spin 2s linear infinite;
+    padding: 30px;
+  }
+  .titles{
+    padding: 1rem;
+    width: 100%;
+  }
+  .zone{
+    margin: auto;
+    position: relative;
+    width: 1000px;
+    padding: 2rem;
+  }
+  #inputbar {
+    display:inline-block;
+  }
+  #submitbutton {
+    display:inline-block;
+  }
+  </style>
+
+
+  <div class="zone" style="background: rgba(10,10,10,0.2); border-radius: 20px; margin-top: 7rem;">
+    <form class="" action="/results" method="post">
+      {{ form.hidden_tag() }}
+      <fieldset class = "form-group">
+        <div class="" style="width: 100%;">
+          <h3 style="color: #CEE89E;">
+            {{ form.folder.label(class="form-control-label") }}
+          </h3>
+            {{ form.folder(class="form-control form-control-lg") }}
+        </div>
+      </fieldset>
+      <div id="submitbutton">
+        {{ form.submit(class="btn btn-primary btn-block") }}
+      </div>
+    </form>
+  </div>
+
+
+{% endblock %}

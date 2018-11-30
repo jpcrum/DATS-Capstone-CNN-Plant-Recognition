@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container-fluid h-100">
+  <div class="d-flex justify-content-center">
+
+      <button id = "button" style="position: absolute; top: 40%; font-size: 24px; border-radius: 8px; width: 50%;" type="button" class="btn btn-secondary btn-lg active" role="button" aria-pressed="true">
+        <a class="nav-link" style="color: white;" href="{{ url_for('upload') }}">Upload Images</a>
+      </button>
+
+  </div>
+</div>
+
+{% endblock %}

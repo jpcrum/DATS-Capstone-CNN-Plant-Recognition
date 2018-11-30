@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block content %}
+<head>
+<style>
+table {
+    font-family: arial, sans-serif;
+    border-collapse: collapse;
+    width: 75%;
+}
+
+td {
+    border: 1px solid #dddddd;
+    text-align: center;
+    padding: 2px;
+    width: 10%;
+    bgcolor: black;
+}
+
+th {
+    border: 1px solid #dddddd;
+    text-align: center;
+    padding: 2px;
+    width: 10%;
+    color: white;
+}
+
+tr:nth-child(even) {
+    background-color: #dddddd;
+}
+</style>
+</head>
+<body>
+  <h1 align="center" style="color:white;">Success!</h1>
+
+  <table align="center" valign="middle" padding=50px>
+    <tr>
+      <th bgcolor="#000000">Black-Grass</th>
+      <th bgcolor="#000000">Charlock</th>
+      <th bgcolor="#000000">Cleavers</th>
+      <th bgcolor="#000000">Common Chickweed</th>
+      <th bgcolor="#000000">Common Wheat</th>
+      <th bgcolor="#000000">Fat Hen</th>
+    </tr>
+    <tr>
+      <td>{{results['Black-Grass']}}</td>
+      <td>{{results['Charlock']}}</td>
+      <td>{{results['Cleavers']}}</td>
+      <td>{{results['Common Chickweed']}}</td>
+      <td>{{results['Common Wheat']}}</td>
+      <td>{{results['Fat Hen']}}</td>
+    </tr>
+  </table>
+
+  <table align="center" valign="middle" padding=50px>
+    <tr>
+      <th bgcolor="#000000">Loose Silky-Bent</th>
+      <th bgcolor="#000000">Maize</th>
+      <th bgcolor="#000000">Scentless Mayweed</th>
+      <th bgcolor="#000000">Shepherds Purse</th>
+      <th bgcolor="#000000">Small-Flowered Cranesbill</th>
+      <th bgcolor="#000000">Sugar Beet</th>
+    </tr>
+    <tr>
+      <td>{{results['Loose Silky-Bent']}}</td>
+      <td>{{results['Maize']}}</td>
+      <td>{{results['Scentless Mayweed']}}</td>
+      <td>{{results['Shepherds Purse']}}</td>
+      <td>{{results['Small-Flowered Cranesbill']}}</td>
+      <td>{{results['Sugar Beet']}}</td>
+    </tr>
+  </table>
+</body>
+
+{% endblock %}
