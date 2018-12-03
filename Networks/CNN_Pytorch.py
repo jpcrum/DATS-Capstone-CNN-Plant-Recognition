@@ -41,10 +41,12 @@ class CustomDatasetFromImages(Dataset):
         green[imask] = norm_im[imask]
         medblur = cv2.medianBlur(green, 13)
 
-        #img_final = np.expand_dims(medblur, 0)
         single_image_label = self.label_array[index]
         # Return image and the label
-        return (medblur, single_image_label)
+        return (img_resized, single_image_label)
+        #return (medblur, single_image_label)
+        #return (medblur, single_image_label)
+        #return (medblur, single_image_label)
 
 
     def __len__(self):
@@ -56,12 +58,13 @@ if __name__ == '__main__':
 
 #transform = transforms.Compose([transforms.ToPILImage(), transforms.ToTensor()])
 
-num_epochs = 20
+num_epochs = 10
 batch_size = 100
 learning_rate = 0.001
 
 train = DataLoader(train_loader, batch_size = batch_size, shuffle=True)
 test = DataLoader(test_loader, batch_size = batch_size, shuffle=True)
+
 
 train_iter = iter(train)
 test_iter = iter(test)
@@ -98,7 +101,8 @@ class CNN(nn.Module):
             nn.ReLU(),
             nn.MaxPool2d(2))
         self.fc1 = nn.Linear(6 * 6 * 32, 128)
-        self.fc2 = nn.Linear(128, 16)
+        self.drop1 = nn.Dropout(0.1)
+        self.fc2 = nn.Linear(128, 12)
 
     def forward(self, x):
         out = self.layer1(x.float())
@@ -107,6 +111,7 @@ class CNN(nn.Module):
         out = self.layer4(out)
         out = out.view(out.size(0), -1)
         out = self.fc1(out)
+        out = self.drop1(out)
         out = self.fc2(out)
         return out
 # -----------------------------------------------------------------------------------
@@ -125,10 +130,13 @@ start_time = time.time()
 for epoch in range(num_epochs):
     print ("Starting Epoch {}".format(epoch + 1))
     train_iter = iter(train)
-    i = 0
-    for images, labels in train_iter:
+    #i = 0
+    for i, (images, labels) in enumerate(train_iter):
         # images = torch.from_numpy(images)
         # labels = torch.from_numpy(np.ndarray(labels))
+        images_fixed = [image.permute(2,0,1) for image in images]
+        images = torch.stack(images_fixed)
+
         images = Variable(images).cuda()
         labels = Variable(labels).cuda()
 
@@ -138,10 +146,10 @@ for epoch in range(num_epochs):
         loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
-        i += 1
+        #i += 1
 
-        if (i) % 1 == 0:
-            print('Epoch {}/{}, Iter {}/{}, Loss: {}'.format(epoch + 1, num_epochs, i, (train_loader.data_len / batch_size), loss.item()))
+        if i % 50 == 0:
+            print('Epoch {}/{}, Iter {}/{}, Loss: {}'.format(epoch + 1, num_epochs, i, int(train_loader.data_len / batch_size), loss.item()))
 
         losses.append(loss.item())
 
@@ -157,21 +165,25 @@ total = 0
 im_labels = []
 im_preds = []
 
-for images, labels in test_iter:
+for i, (images, labels) in enumerate(test_iter):
+    images_fixed = [image.permute(2, 0, 1) for image in images]
+    images = torch.stack(images_fixed)
     images = Variable(images).cuda()
     outputs = cnn(images)
+    if i % 10 == 0:
+        print("Preicting {}/{}...".format(i, len(test_iter)))
     _, predicted = torch.max(outputs.data, 1)
     total += labels.size(0)
     correct += (predicted.cpu() == labels).sum()
 
     im_labels.append(labels.cpu().numpy())
     im_preds.append(predicted.cpu().numpy())
+
+print('Done Predicting!')
 # -----------------------------------------------------------------------------------
 print('Test Accuracy of the model on the test images: {}'.format(100 * correct / total))
 # -----------------------------------------------------------------------------------
 # Save the Trained Model
-torch.save(cnn.state_dict(), 'cnn-224-4ConvBlocks-00001lr-7733kernel-Adam-100Epochs.pkl')
-#torch.save(cnn.state_dict(), 'cnn-wholeimage-224-4ConvBlocks-00001lr-11kernel-Adam.pkl".pkl')
 
 preds = [x for pred in im_preds for x in pred]
 labels = [x for label in im_labels for x in label]
@@ -182,43 +194,28 @@ cm = confusion_matrix(labels, preds)
 print(cm)
 
 acc = accuracy_score(labels, preds, sample_weight=None)
-print("Accuracy: " + acc)
+print("Accuracy: " + str(acc))
 
 f1 = f1_score(labels, preds, average='macro')
-print("F1: " + f1)
+print("F1: " + str(f1))
 recall = recall_score(labels, preds, average='macro')
-print("Recall: " + recall)
+print("Recall: " + str(recall))
 precision = precision_score(labels, preds, average='macro')
-print("Precision: " + precision)
+print("Precision: " + str(precision))
 
-plt.figure(figsize=(10, 6.18))
+torch.save(cnn.state_dict(), '/home/ubuntu/PlantImageRecognition/Models/CNNnoPreprocess.pkl')
 
-ax = plt.subplot(111)
-ax.spines["top"].set_visible(False)
-ax.spines["bottom"].set_visible(False)
-ax.spines["right"].set_visible(False)
-ax.spines["left"].set_visible(False)
+weights = []
+for i in range(32):
+    kernel = cnn._modules['layer1']._modules['0'].weight.data[i][0].cpu().numpy()
+    weights.append(kernel)
 
-ax.get_xaxis().tick_bottom()
-ax.get_yaxis().tick_left()
+flat_weights = []
+for weight in weights:
+    flat_weight = [x for row in weight for x in row]
+    flat_weights.append(flat_weight)
 
-plt.xlim(1, num_epochs)
-plt.ylim(-0.01, np.max(losses)+0.5)
+weights_df = pd.DataFrame(flat_weights)
+weights_df.to_csv('/home/ubuntu/PlantImageRecognition/Metrics/kernelsNoPre.csv')
 
-plt.xticks(range(1, num_epochs + 1))
-
-for y in np.arange(0, np.max(losses) + 0.1, 1):
-    plt.plot(range(1, 6), [y] * len(range(1, num_epochs + 1)), "--", lw=0.5, color="black", alpha=0.3)
-
-plt.tick_params(axis="both", which="both", bottom="off", top="off",
-                labelbottom="on", left="off", right="off", labelleft="on")
-
-ax.plot(losses, lw=1.5, color='#E45555')
-
-plt.title('{} vs {}'.format(metric, parameter), fontsize=14, y=1.03)
-plt.xlabel('Epoch', fontsize=12, labelpad=10)
-plt.ylabel('{}'.format(metric), fontsize=12, labelpad=10)
-plt.show()
-
-
-print(a)
+print('Done')

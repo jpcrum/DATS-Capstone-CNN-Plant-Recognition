@@ -61,7 +61,7 @@ def preprocess(image):
     imask = mask > 0
     green = np.zeros_like(norm_im, np.uint8)
     green[imask] = norm_im[imask]
-    medblur = cv2.medianBlur(green, 13)
+    #medblur = cv2.medianBlur(green, 13)
     #return norm_im
     return green
     #return medblur
@@ -127,7 +127,7 @@ callbacks_list = [earlystop]
 
 #325, 77
 
-model.fit_generator(train_batches, steps_per_epoch=1, validation_data = valid_batches, validation_steps=1, epochs=1, callbacks=callbacks_list, verbose=1)
+model.fit_generator(train_batches, steps_per_epoch=325, validation_data = valid_batches, validation_steps=77, epochs=1, callbacks=callbacks_list, verbose=1)
 os.system("gpustat")
 
 model.save("11layerCNN-100x100-5epochs-Adam-GreenMask.h5")
@@ -169,3 +169,17 @@ print(acc)
 
 
 print(acc)
+
+
+weights = []
+for i in range(32):
+    kernel = cnn._modules['layer1']._modules['0'].weight.data[i][0].cpu().numpy()
+    weights.append(kernel)
+
+flat_weights = []
+for weight in weights:
+    flat_weight = [x for row in weight for x in row]
+    flat_weights.append(flat_weight)
+
+weights_df = pd.DataFrame(flat_weights)
+weights_df.to_csv('/home/ubuntu/MachineLearningII/Weights/11-9-7-5-3kernelmode1kerneldf.csv')
