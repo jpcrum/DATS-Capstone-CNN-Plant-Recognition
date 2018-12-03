@@ -2,6 +2,13 @@
 
 Preprocessing:
 
+- All in Jupyter Notebooks
+
+    Image_Augmentation:
+	- Rotates and flips images to augment the image dataset 10-fold
+
+    Image EDA:
+	-  
 
 
 
@@ -14,7 +21,7 @@ Import flask and flask-wtf:
 - conda install flask-wtf
 
 Run App:
-- cd <Application-Folder>
+- cd *Application folder*
 - set FLASK_APP=routes.py (no spaces around '=')
 - set FLASK_DEBUG=1
 - flask run
