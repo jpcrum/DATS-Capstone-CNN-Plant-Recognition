@@ -58,7 +58,7 @@ if __name__ == '__main__':
 
 #transform = transforms.Compose([transforms.ToPILImage(), transforms.ToTensor()])
 
-num_epochs = 10
+num_epochs = 5
 batch_size = 100
 learning_rate = 0.001
 
