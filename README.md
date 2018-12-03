@@ -1,4 +1,7 @@
 # DATS-Capstone-CNN-Plant-Recognition
+Link to Google Bucket with Original Data:
+https://console.cloud.google.com/storage/browser/dats-capstone-bucket
+
 
 Preprocessing (Preprocessing Jupyter Notebook Folder):
 
