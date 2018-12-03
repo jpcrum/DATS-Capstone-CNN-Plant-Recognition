@@ -37,7 +37,7 @@ def load_images(file_path):
                     image_filenames.append(str(root)+os.sep+str(file))
 
     df = pd.DataFrame(image_filenames,columns=['image_paths'])
-    df.to_csv("predict_images.csv",index = False)
+    #df.to_csv("predict_images.csv",index = False)
 
     return image_filenames
 
@@ -66,7 +66,7 @@ def preprocess_images(file_list):
 
 
 def predict_images(images):
-    model = load_model("CNN_Models/11layerCNN-100x100-5epochs-Adam-7x7kernel-32to64FM.h5")
+    model = load_model("CNN_Models/CNN.h5")
     pred = []
     for image in images:
         image = np.expand_dims(image, axis=0)
