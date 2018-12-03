@@ -55,7 +55,7 @@ input_dim = 100
 #input_dim = 200
 
 def preprocess(image):
-    norm_im = cv2.normalize(image, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
+    norm_im = cv2.normalize(image, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
     hsv = cv2.cvtColor(norm_im, cv2.COLOR_BGR2HSV)
     mask = cv2.inRange(hsv, (40, 0, 0), (100, 255, 255))
     imask = mask > 0
