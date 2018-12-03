@@ -1,15 +1,3 @@
-# DATS-Capstone-CNN-Plant-Recognition
-
-Preprocessing:
-
-- All in Jupyter Notebooks
-
-    Image_Augmentation:
-	- Rotates and flips images to augment the image dataset 10-fold
-
-    Image EDA:
-	-  
-
 
 
 
