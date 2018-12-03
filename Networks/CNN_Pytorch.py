@@ -35,18 +35,17 @@ class CustomDatasetFromImages(Dataset):
 
         norm_im = cv2.normalize(img_resized, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
         hsv = cv2.cvtColor(norm_im, cv2.COLOR_BGR2HSV)
-        mask = cv2.inRange(hsv, (40, 0, 0), (100, 255, 255))
+        mask = cv2.inRange(hsv, (40, 0, 0), (110, 255, 255))
         imask = mask > 0
         green = np.zeros_like(norm_im, np.uint8)
         green[imask] = norm_im[imask]
-        medblur = cv2.medianBlur(green, 13)
+        medblur = cv2.medianBlur(green, 9)
 
         single_image_label = self.label_array[index]
         # Return image and the label
-        return (img_resized, single_image_label)
-        #return (medblur, single_image_label)
-        #return (medblur, single_image_label)
-        #return (medblur, single_image_label)
+        #return (img_resized, single_image_label)
+        #return (norm_im, single_image_label)
+        return (medblur, single_image_label)
 
 
     def __len__(self):
@@ -203,7 +202,7 @@ print("Recall: " + str(recall))
 precision = precision_score(labels, preds, average='macro')
 print("Precision: " + str(precision))
 
-torch.save(cnn.state_dict(), '/home/ubuntu/PlantImageRecognition/Models/CNNnoPreprocess.pkl')
+torch.save(cnn.state_dict(), '/home/ubuntu/PlantImageRecognition/Models/CNNmaskblur.pkl')
 
 weights = []
 for i in range(32):
@@ -216,6 +215,6 @@ for weight in weights:
     flat_weights.append(flat_weight)
 
 weights_df = pd.DataFrame(flat_weights)
-weights_df.to_csv('/home/ubuntu/PlantImageRecognition/Metrics/kernelsNoPre.csv')
+weights_df.to_csv('/home/ubuntu/PlantImageRecognition/Metrics/kernelsMaskBlur.csv')
 
 print('Done')
