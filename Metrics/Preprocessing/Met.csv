@@ -1,0 +1,4 @@
+Preprocessing,Accuracy,Recall,Precision,F1
+None,0.445,0.458,0.665,0.381
+Normalized,0.872,0.878,0.878,0.874
+Mask+Blur,0.882,0.881,0.892,0.88

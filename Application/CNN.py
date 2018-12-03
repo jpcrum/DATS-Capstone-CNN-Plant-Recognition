@@ -36,8 +36,8 @@ def load_images(file_path):
                 if(file[-3:] == "png" or file[-3:] == "PNG"):
                     image_filenames.append(str(root)+os.sep+str(file))
 
-    df = pd.DataFrame(image_filenames,columns=['image_paths','labels'])
-    df.to_csv("predict_images.csv",index = False))
+    df = pd.DataFrame(image_filenames,columns=['image_paths'])
+    df.to_csv("predict_images.csv",index = False)
 
     return image_filenames
 
@@ -66,7 +66,7 @@ def preprocess_images(file_list):
 
 
 def predict_images(images):
-    model = load_model("CNN_Models/CNN.h5")
+    model = load_model("CNN_Models/11layerCNN-100x100-5epochs-Adam-7x7kernel-32to64FM.h5")
     pred = []
     for image in images:
         image = np.expand_dims(image, axis=0)
@@ -81,36 +81,45 @@ def predict_images(images):
     return preds, pred, images
 
 
-def torch_predict_images(images):
-    model = load_model("CNN_Models/CNN.h5")
-
-    class CustomDatasetFromImages(Dataset):
-        def __init__(self, csv_path):
-            self.data_info = pd.read_csv(csv_path)
-            self.image_array = np.asarray(self.data_info.iloc[:, 0])
-            self.data_len = len(self.data_info.index)
-
-        def __getitem__(self, index):
-            # Get image name from the pandas df
-            single_image_name = self.image_array[index]
-            img_as_img = cv2.imread(single_image_name)
-            img_resized = cv2.resize(img_as_img, (100, 100))
-            norm_im = cv2.normalize(img_resized, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
-            hsv = cv2.cvtColor(norm_im, cv2.COLOR_BGR2HSV)
-            mask = cv2.inRange(hsv, (40, 0, 0), (110, 255, 255))
-            imask = mask > 0
-            green = np.zeros_like(norm_im, np.uint8)
-            green[imask] = norm_im[imask]
-            medblur = cv2.medianBlur(green, 9)
-            return (medblur)
-        def __len__(self):
-            return self.data_len
-
-    if __name__ == '__main__':
-        test_loader = CustomDatasetFromImages('predict_images.csv')
-
-    print(test_loader)
-
+# def torch_predict_images(images):
+#     model = torch.load('CNN_Models/CNNmaskblur.pkl', map_location='cpu')
+#
+#
+#     class CustomDatasetFromImages(Dataset):
+#         def __init__(self, csv_path):
+#             self.data_info = pd.read_csv(csv_path)
+#             self.image_array = np.asarray(self.data_info.iloc[:, 0])
+#             self.data_len = len(self.data_info.index)
+#
+#         def __getitem__(self, index):
+#             # Get image name from the pandas df
+#             single_image_name = self.image_array[index]
+#             img_as_img = cv2.imread(single_image_name)
+#             img_resized = cv2.resize(img_as_img, (100, 100))
+#             norm_im = cv2.normalize(img_resized, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
+#             hsv = cv2.cvtColor(norm_im, cv2.COLOR_BGR2HSV)
+#             mask = cv2.inRange(hsv, (40, 0, 0), (110, 255, 255))
+#             imask = mask > 0
+#             green = np.zeros_like(norm_im, np.uint8)
+#             green[imask] = norm_im[imask]
+#             medblur = cv2.medianBlur(green, 9)
+#             return (medblur)
+#         def __len__(self):
+#             return self.data_len
+#
+#
+#     test_loader = CustomDatasetFromImages('predict_images.csv')
+#
+#     print(test_loader)
+#
+#     for image in test_loader:
+#         #print(image)
+#         #print(image.shape)
+#         image = np.transpose(image, [2, 0, 1])
+#         #images = Variable(images)
+#         outputs = model(image)
+#         _, predicted = torch.max(outputs.data, 1)
+#         print(predicted)
 
 
 def sort(preds, image_paths):
@@ -123,9 +132,4 @@ def sort(preds, image_paths):
         paths = image.rsplit('\\', 1)
         prediction = str(pred[image])
         new_folder = classes[prediction]
-        # print(image)
-        # print(paths[0])
-        # print(new_folder)
-        # print(paths[1])
-        # print(paths[0] + new_folder + paths[1])
         os.rename(image, paths[0] + '/' + new_folder + '/' + paths[1])

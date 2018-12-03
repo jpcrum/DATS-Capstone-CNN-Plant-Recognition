@@ -20,6 +20,8 @@ def results():
     path = form.folder.data
     images = load_images(form.folder.data)
     preprocessed = preprocess_images(images)
+    #torch_predict_images(images)
+    #print(torch_pred)
     predict, predictions, paths = predict_images(preprocessed)
 
     classes = {'0':'Black-Grass', '1':'Charlock', '2':'Cleavers', '3':'Common Chickweed', '4':'Common wheat', '5':'Fat Hen', '6':'Loose Silky-bent',
