@@ -1,3 +1,18 @@
+# DATS-Capstone-CNN-Plant-Recognition
+
+Preprocessing:
+
+- All in Jupyter Notebooks
+	-Reset all paths as needed
+	
+    Image_Augmentation:
+	- Rotates and flips images to augment the image dataset 10-fold
+
+    Image EDA:
+	-  
+
+    Image Preprocessing:
+	- Examines effects of normalization, hue masking, and median blurring on plant dataset
 
 
 
