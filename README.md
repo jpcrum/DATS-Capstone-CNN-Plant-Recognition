@@ -1,5 +1,11 @@
 # DATS-Capstone-CNN-Plant-Recognition
 
+Preprocessing:
+
+
+
+
+
 Application:
 
 Import flask and flask-wtf:
@@ -9,6 +15,13 @@ Import flask and flask-wtf:
 
 Run App:
 - cd <Application-Folder>
-- set FLASK_APP=routes.py
+- set FLASK_APP=routes.py (no spaces around '=')
+- set FLASK_DEBUG=1
 - flask run
+
+Using App:
+- Open port that app is running on (prints when running)
+- Click "Upload Photos"
+- Copy and paste image folder path into input bar
+- Press "Analyze"
 
