@@ -15,6 +15,9 @@ import time
 
 image_size = 100
 
+
+######### Image Data Generator ##############
+
 class CustomDatasetFromImages(Dataset):
     def __init__(self, csv_path, transforms):
         # Read the csv file
@@ -33,6 +36,7 @@ class CustomDatasetFromImages(Dataset):
         img_as_img = cv2.imread(single_image_name)
         img_resized = cv2.resize(img_as_img, (image_size, image_size))
 
+        #Preprocess the images
         norm_im = cv2.normalize(img_resized, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
         hsv = cv2.cvtColor(norm_im, cv2.COLOR_BGR2HSV)
         mask = cv2.inRange(hsv, (40, 0, 0), (110, 255, 255))
@@ -61,10 +65,11 @@ num_epochs = 5
 batch_size = 100
 learning_rate = 0.001
 
+#Load the data
 train = DataLoader(train_loader, batch_size = batch_size, shuffle=True)
 test = DataLoader(test_loader, batch_size = batch_size, shuffle=True)
 
-
+#Iterate over data
 train_iter = iter(train)
 test_iter = iter(test)
 
@@ -100,7 +105,7 @@ class CNN(nn.Module):
             nn.ReLU(),
             nn.MaxPool2d(2))
         self.fc1 = nn.Linear(6 * 6 * 32, 128)
-        self.drop1 = nn.Dropout(0.1)
+        self.drop1 = nn.Dropout(0.4)
         self.fc2 = nn.Linear(128, 12)
 
     def forward(self, x):
@@ -110,7 +115,7 @@ class CNN(nn.Module):
         out = self.layer4(out)
         out = out.view(out.size(0), -1)
         out = self.fc1(out)
-        #out = self.drop1(out)
+        out = self.drop1(out)
         out = self.fc2(out)
         return out
 # -----------------------------------------------------------------------------------
@@ -202,7 +207,7 @@ print("Recall: " + str(recall))
 precision = precision_score(labels, preds, average='macro')
 print("Precision: " + str(precision))
 
-torch.save(cnn.state_dict(), '/home/ubuntu/PlantImageRecognition/Models/NoDropout.pkl')
+torch.save(cnn.state_dict(), '/home/ubuntu/PlantImageRecognition/Models/HighDropout.pkl')
 
 weights = []
 for i in range(32):
@@ -215,6 +220,6 @@ for weight in weights:
     flat_weights.append(flat_weight)
 
 weights_df = pd.DataFrame(flat_weights)
-weights_df.to_csv('/home/ubuntu/PlantImageRecognition/Metrics/kernelsNoDropout.csv')
+weights_df.to_csv('/home/ubuntu/PlantImageRecognition/Metrics/kernelsHighDropout.csv')
 
 print('Done')

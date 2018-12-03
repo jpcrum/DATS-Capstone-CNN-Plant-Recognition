@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import os
 import random as rn
 import tensorflow as tf
+import pandas as pd
+
 import keras
 from keras import backend as K
 from keras.models import Sequential
@@ -16,7 +18,14 @@ from keras.layers.convolutional import *
 from sklearn.metrics import confusion_matrix, accuracy_score
 from keras.models import load_model
 
-
+import torch
+import torch.nn as nn
+import torchvision.transforms as transforms
+from torch.autograd import Variable
+from torch.utils.data import DataLoader
+import torchvision.transforms as transforms
+from torch.utils.data.dataset import Dataset
+import time
 
 
 def load_images(file_path):
@@ -26,6 +35,10 @@ def load_images(file_path):
             for file in files:
                 if(file[-3:] == "png" or file[-3:] == "PNG"):
                     image_filenames.append(str(root)+os.sep+str(file))
+
+    df = pd.DataFrame(image_filenames,columns=['image_paths','labels'])
+    df.to_csv("predict_images.csv",index = False))
+
     return image_filenames
 
 
@@ -51,6 +64,7 @@ def preprocess_images(file_list):
 
 
 
+
 def predict_images(images):
     model = load_model("CNN_Models/CNN.h5")
     pred = []
@@ -65,6 +79,38 @@ def predict_images(images):
         preds[i] = int(pred.count(i))
     preds = list(preds)
     return preds, pred, images
+
+
+def torch_predict_images(images):
+    model = load_model("CNN_Models/CNN.h5")
+
+    class CustomDatasetFromImages(Dataset):
+        def __init__(self, csv_path):
+            self.data_info = pd.read_csv(csv_path)
+            self.image_array = np.asarray(self.data_info.iloc[:, 0])
+            self.data_len = len(self.data_info.index)
+
+        def __getitem__(self, index):
+            # Get image name from the pandas df
+            single_image_name = self.image_array[index]
+            img_as_img = cv2.imread(single_image_name)
+            img_resized = cv2.resize(img_as_img, (100, 100))
+            norm_im = cv2.normalize(img_resized, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
+            hsv = cv2.cvtColor(norm_im, cv2.COLOR_BGR2HSV)
+            mask = cv2.inRange(hsv, (40, 0, 0), (110, 255, 255))
+            imask = mask > 0
+            green = np.zeros_like(norm_im, np.uint8)
+            green[imask] = norm_im[imask]
+            medblur = cv2.medianBlur(green, 9)
+            return (medblur)
+        def __len__(self):
+            return self.data_len
+
+    if __name__ == '__main__':
+        test_loader = CustomDatasetFromImages('predict_images.csv')
+
+    print(test_loader)
+
 
 
 def sort(preds, image_paths):
