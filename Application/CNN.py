@@ -37,7 +37,7 @@ def load_images(file_path):
                     image_filenames.append(str(root)+os.sep+str(file))
 
     df = pd.DataFrame(image_filenames,columns=['image_paths'])
-    #df.to_csv("predict_images.csv",index = False)
+    df.to_csv("predict_images.csv",index = False)
 
     return image_filenames
 
@@ -81,45 +81,70 @@ def predict_images(images):
     return preds, pred, images
 
 
-# def torch_predict_images(images):
-#     model = torch.load('CNN_Models/CNNmaskblur.pkl', map_location='cpu')
-#
-#
-#     class CustomDatasetFromImages(Dataset):
-#         def __init__(self, csv_path):
-#             self.data_info = pd.read_csv(csv_path)
-#             self.image_array = np.asarray(self.data_info.iloc[:, 0])
-#             self.data_len = len(self.data_info.index)
-#
-#         def __getitem__(self, index):
-#             # Get image name from the pandas df
-#             single_image_name = self.image_array[index]
-#             img_as_img = cv2.imread(single_image_name)
-#             img_resized = cv2.resize(img_as_img, (100, 100))
-#             norm_im = cv2.normalize(img_resized, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
-#             hsv = cv2.cvtColor(norm_im, cv2.COLOR_BGR2HSV)
-#             mask = cv2.inRange(hsv, (40, 0, 0), (110, 255, 255))
-#             imask = mask > 0
-#             green = np.zeros_like(norm_im, np.uint8)
-#             green[imask] = norm_im[imask]
-#             medblur = cv2.medianBlur(green, 9)
-#             return (medblur)
-#         def __len__(self):
-#             return self.data_len
-#
-#
-#     test_loader = CustomDatasetFromImages('predict_images.csv')
-#
-#     print(test_loader)
-#
-#     for image in test_loader:
-#         #print(image)
-#         #print(image.shape)
-#         image = np.transpose(image, [2, 0, 1])
-#         #images = Variable(images)
-#         outputs = model(image)
-#         _, predicted = torch.max(outputs.data, 1)
-#         print(predicted)
+
+def torch_predict_images(images):
+
+    class CNN(nn.Module):
+        def __init__(self):
+            super(CNN, self).__init__()
+            self.layer1 = nn.Sequential(
+                #1 input for grayscale, # of feature maps,
+                nn.Conv2d(3, 32, kernel_size=7, padding=3, stride=1),
+                nn.BatchNorm2d(32),
+                nn.ReLU(),
+                nn.MaxPool2d(2))
+            self.layer2 = nn.Sequential(
+                nn.Conv2d(32, 32, kernel_size=7, padding=3),
+                nn.BatchNorm2d(32),
+                nn.ReLU(),
+                nn.MaxPool2d(2))
+            self.layer3 = nn.Sequential(
+                nn.Conv2d(32, 32, kernel_size=3, padding=1),
+                nn.BatchNorm2d(32),
+                nn.ReLU(),
+                nn.MaxPool2d(2))
+            self.layer4 = nn.Sequential(
+                nn.Conv2d(32, 32, kernel_size=3, padding=1),
+                nn.BatchNorm2d(32),
+                nn.ReLU(),
+                nn.MaxPool2d(2))
+            self.fc1 = nn.Linear(6 * 6 * 32, 128)
+            self.drop1 = nn.Dropout(0.4)
+            self.fc2 = nn.Linear(128, 12)
+
+        def forward(self, x):
+            out = self.layer1(x.float())
+            out = self.layer2(out)
+            out = self.layer3(out)
+            out = self.layer4(out)
+            out = out.view(out.size(0), -1)
+            out = self.fc1(out)
+            out = self.drop1(out)
+            out = self.fc2(out)
+            return out
+
+    cnn = CNN()
+    cnn.load_state_dict(torch.load('CNN_Models/CNNmaskblur.pkl', map_location='cpu'))
+
+    preds = []
+
+    for image in images:
+        #print(image)
+        print(image.shape)
+        image = np.transpose(image, [2, 0, 1])
+        image = np.expand_dims(image, axis=0)
+        #image1 = image.astype(np.float32)
+        image = Variable(torch.from_numpy(image))
+        outputs = cnn(image)
+        _, predicted = torch.max(outputs.data, 1)
+        preds.append(predicted.cpu().numpy()[0])
+
+    predictions = np.zeros(12)
+    for i in range(12):
+        predictions[i] = int(preds.count(i))
+    counts = list(predictions)
+
+    return preds, counts
 
 
 def sort(preds, image_paths):
