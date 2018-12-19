@@ -46,20 +46,19 @@ def load_images(file_path):
 
 def preprocess_images(file_list):
     images = []
-    i = 1
-    for image in file_list:
+    for i, image in enumerate(file_list):
         im = cv2.imread(image)
-        im = cv2.resize(im, (100, 100))
+        im = cv2.resize(im, (224, 224))
         norm_im = cv2.normalize(im, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
         hsv = cv2.cvtColor(norm_im, cv2.COLOR_BGR2HSV)
-        mask = cv2.inRange(hsv, (40, 0, 0), (100, 255,255))
+        mask = cv2.inRange(hsv, (40, 0, 0), (110, 255,255))
         imask = mask>0
         green = np.zeros_like(im, np.uint8)
         green[imask] = im[imask]
-        medblur = cv2.medianBlur(green, 13)
+        medblur = cv2.medianBlur(green, 7)
         images.append(np.array(medblur))
-        cv2.imwrite('static/image{}.jpg'.format(i), medblur)
-        i += 1
+        # if i % 10:
+        #     cv2.imwrite('static/image{}.jpg'.format(i), medblur)
     return images
 
 
@@ -99,7 +98,7 @@ def torch_predict_images(images):
                 nn.ReLU(),
                 nn.MaxPool2d(2))
             self.layer3 = nn.Sequential(
-                nn.Conv2d(32, 32, kernel_size=3, padding=1),
+                nn.Conv2d(32, 32, kernel_size=5, padding=2),
                 nn.BatchNorm2d(32),
                 nn.ReLU(),
                 nn.MaxPool2d(2))
@@ -108,8 +107,13 @@ def torch_predict_images(images):
                 nn.BatchNorm2d(32),
                 nn.ReLU(),
                 nn.MaxPool2d(2))
-            self.fc1 = nn.Linear(6 * 6 * 32, 128)
-            self.drop1 = nn.Dropout(0.4)
+            self.layer5 = nn.Sequential(
+                nn.Conv2d(32, 32, kernel_size=3, padding=1),
+                nn.BatchNorm2d(32),
+                nn.ReLU(),
+                nn.MaxPool2d(2))
+            self.fc1 = nn.Linear(7 * 7 * 32, 128)
+            self.drop1 = nn.Dropout(0.2)
             self.fc2 = nn.Linear(128, 12)
 
         def forward(self, x):
@@ -117,6 +121,7 @@ def torch_predict_images(images):
             out = self.layer2(out)
             out = self.layer3(out)
             out = self.layer4(out)
+            out = self.layer5(out)
             out = out.view(out.size(0), -1)
             out = self.fc1(out)
             out = self.drop1(out)
@@ -124,32 +129,37 @@ def torch_predict_images(images):
             return out
 
     cnn = CNN()
-    cnn.load_state_dict(torch.load('CNN_Models/CNNmaskblur.pkl', map_location='cpu'))
+    cnn.load_state_dict(torch.load('CNN_Models/BigModel.pkl', map_location='cpu'))
 
     preds = []
 
     for image in images:
         #print(image)
-        print(image.shape)
         image = np.transpose(image, [2, 0, 1])
         image = np.expand_dims(image, axis=0)
         #image1 = image.astype(np.float32)
         image = Variable(torch.from_numpy(image))
         outputs = cnn(image)
+        p = outputs.data.cpu().numpy()
+        a = np.exp(p[0])
+        a_sum = sum(a)
+        softmax = [b/a_sum for b in a]
         _, predicted = torch.max(outputs.data, 1)
-        preds.append(predicted.cpu().numpy()[0])
+        if (max(softmax) >= 0.7):
+            preds.append(predicted.cpu().numpy()[0])
+        else:
+            preds.append(12)
 
-    predictions = np.zeros(12)
-    for i in range(12):
+    predictions = np.zeros(13)
+    for i in range(13):
         predictions[i] = int(preds.count(i))
     counts = list(predictions)
-
     return preds, counts
 
 
 def sort(preds, image_paths):
     classes = {'0':'Black-Grass', '1':'Charlock', '2':'Cleavers', '3':'Common Chickweed', '4':'Common wheat', '5':'Fat Hen', '6':'Loose Silky-bent',
-               '7':'Maize', '8':'Scentless Mayweed', '9':'Shepherds Purse', '10':'Small-flowered Cranesbill', '11':'Sugar beet'}
+               '7':'Maize', '8':'Scentless Mayweed', '9':'Shepherds Purse', '10':'Small-flowered Cranesbill', '11':'Sugar beet', '12':'Undecided'}
     pred = {}
     for i in range(len(image_paths)):
         pred[image_paths[i]] = preds[i]

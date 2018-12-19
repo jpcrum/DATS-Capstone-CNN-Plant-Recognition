@@ -13,7 +13,7 @@ from torch.utils.data.dataset import Dataset
 import time
 # -----------------------------------------------------------------------------------
 
-image_size = 100
+image_size = 224
 
 
 ######### Image Data Generator ##############
@@ -39,7 +39,7 @@ class CustomDatasetFromImages(Dataset):
         #Preprocess the images
         norm_im = cv2.normalize(img_resized, None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
         hsv = cv2.cvtColor(norm_im, cv2.COLOR_BGR2HSV)
-        mask = cv2.inRange(hsv, (40, 0, 0), (110, 255, 255))
+        mask = cv2.inRange(hsv, (30, 0, 0), (110, 255, 255))
         imask = mask > 0
         green = np.zeros_like(norm_im, np.uint8)
         green[imask] = norm_im[imask]
@@ -49,7 +49,7 @@ class CustomDatasetFromImages(Dataset):
         # Return image and the label
         #return (img_resized, single_image_label)
         #return (norm_im, single_image_label)
-        return (medblur, single_image_label)
+        return (norm_im, single_image_label)
 
 
     def __len__(self):
@@ -61,7 +61,7 @@ if __name__ == '__main__':
 
 #transform = transforms.Compose([transforms.ToPILImage(), transforms.ToTensor()])
 
-num_epochs = 5
+num_epochs = 30
 batch_size = 100
 learning_rate = 0.001
 
@@ -95,7 +95,7 @@ class CNN(nn.Module):
             nn.ReLU(),
             nn.MaxPool2d(2))
         self.layer3 = nn.Sequential(
-            nn.Conv2d(32, 32, kernel_size=3, padding=1),
+            nn.Conv2d(32, 32, kernel_size=5, padding=2),
             nn.BatchNorm2d(32),
             nn.ReLU(),
             nn.MaxPool2d(2))
@@ -104,19 +104,27 @@ class CNN(nn.Module):
             nn.BatchNorm2d(32),
             nn.ReLU(),
             nn.MaxPool2d(2))
-        self.fc1 = nn.Linear(6 * 6 * 32, 128)
-        self.drop1 = nn.Dropout(0.4)
+        self.layer5 = nn.Sequential(
+            nn.Conv2d(32, 32, kernel_size=3, padding=1),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+            nn.MaxPool2d(2))
+        self.fc1 = nn.Linear(7 * 7 * 32, 128)
+        self.drop1 = nn.Dropout(0.2)
         self.fc2 = nn.Linear(128, 12)
+        self.softmax = nn.Softmax()
 
     def forward(self, x):
         out = self.layer1(x.float())
         out = self.layer2(out)
         out = self.layer3(out)
         out = self.layer4(out)
+        out = self.layer5(out)
         out = out.view(out.size(0), -1)
         out = self.fc1(out)
         out = self.drop1(out)
         out = self.fc2(out)
+        #out = self.softmax(out)
         return out
 # -----------------------------------------------------------------------------------
 cnn = CNN()
@@ -152,7 +160,7 @@ for epoch in range(num_epochs):
         optimizer.step()
         #i += 1
 
-        if i % 50 == 0:
+        if i % 100 == 0:
             print('Epoch {}/{}, Iter {}/{}, Loss: {}'.format(epoch + 1, num_epochs, i, int(train_loader.data_len / batch_size), loss.item()))
 
         losses.append(loss.item())
@@ -207,7 +215,7 @@ print("Recall: " + str(recall))
 precision = precision_score(labels, preds, average='macro')
 print("Precision: " + str(precision))
 
-torch.save(cnn.state_dict(), '/home/ubuntu/PlantImageRecognition/Models/HighDropout.pkl')
+torch.save(cnn.state_dict(), '/home/ubuntu/PlantImageRecognition/Models/BigModeNorm.pkl')
 
 weights = []
 for i in range(32):
@@ -220,6 +228,6 @@ for weight in weights:
     flat_weights.append(flat_weight)
 
 weights_df = pd.DataFrame(flat_weights)
-weights_df.to_csv('/home/ubuntu/PlantImageRecognition/Metrics/kernelsHighDropout.csv')
+weights_df.to_csv('/home/ubuntu/PlantImageRecognition/Metrics/BigModelNorm.csv')
 
 print('Done')
