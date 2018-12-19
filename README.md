@@ -44,4 +44,5 @@ Application (Application Folder):
 	- Click "Upload Photos"
 	- Copy and paste image folder path into input bar
 	- Press "Analyze"
+	- Application/ExperimentImages folder contains 20 random images from each species for testing
 
